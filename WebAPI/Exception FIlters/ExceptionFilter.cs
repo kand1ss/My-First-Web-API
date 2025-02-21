@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace WebAPI;
 
-internal class AuthExceptionFilter(ILogger<AuthExceptionFilter> logger) : ExceptionFilterAttribute
+internal class ExceptionFilter(ILogger<ExceptionFilter> logger) : ExceptionFilterAttribute
 {
     public override void OnException(ExceptionContext context)
     {

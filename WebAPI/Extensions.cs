@@ -6,7 +6,7 @@ public static class Extensions
     {
         services.AddControllers(opt =>
         {
-            opt.Filters.Add<AuthExceptionFilter>();
+            opt.Filters.Add<ExceptionFilter>();
         });
         return services;
     }

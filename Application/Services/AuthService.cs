@@ -12,7 +12,7 @@ public class AuthService(
     JWTService jwtService, AccountValidator accountValidator) 
     : IAuthService
 {
-    public async Task RegisterAsync(RegisterDTO registerData)
+    public async Task RegisterAsync(AccountRegisterDTO registerData)
     {
         await accountValidator.Validate(registerData);
 
@@ -37,18 +37,18 @@ public class AuthService(
         await accountRepository.CreateAsync(account);
     }
 
-    public async Task<string> LoginAsync(LoginDTO loginData)
+    public async Task<string> LoginAsync(AccountLoginDTO accountLoginData)
     {
-        await accountValidator.Validate(loginData);
+        await accountValidator.Validate(accountLoginData);
 
-        var account = await accountRepository.GetByLoginAsync(loginData.Login);
-        if(PasswordService.ValidatePassword(loginData.Password, account!))
+        var account = await accountRepository.GetByLoginAsync(accountLoginData.Login);
+        if(PasswordService.ValidatePassword(accountLoginData.Password, account!))
             return jwtService.GenerateToken(account!);
             
         throw new ValidationException("Invalid password");
     }
 
-    public async Task UpdateAccountAsync(string guid, UpdateDTO updateData)
+    public async Task UpdateAccountAsync(string guid, AccountUpdateDTO updateData)
     {
         var account = await accountRepository.GetByGuidAsync(guid);
         if (account == null)

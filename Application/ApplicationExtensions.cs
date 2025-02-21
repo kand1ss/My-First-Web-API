@@ -10,6 +10,8 @@ public static class ApplicationExtensions
     {
         services.AddScoped<AccountValidator>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IBookService, BookService>();
+        
         return services;
     }
 }

@@ -15,7 +15,8 @@ public static class Extensions
         {
             opt.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
         });
-        
+
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
         services.AddScoped<IBookRepository, BookRepository>();
         services.AddScoped<IAuthorRepository, AuthorRepository>();
         services.AddScoped<IAccountRepository, AccountRepository>();

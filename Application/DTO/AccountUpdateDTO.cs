@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTO;
 
-public record UpdateDTO(
+public record AccountUpdateDTO(
     [MinLength(5)] 
     string? Login,
     [MinLength(8)] 

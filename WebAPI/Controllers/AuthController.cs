@@ -18,16 +18,16 @@ public class AuthController(IAuthService authService, IOptions<AuthSettings> set
         => Guid.TryParse(guid, out _);
     
     [HttpPost]
-    public async Task<IActionResult> RegisterAccountAsync([FromBody] RegisterDTO registerData)
+    public async Task<IActionResult> RegisterAccountAsync([FromBody] AccountRegisterDTO registerData)
     {
         await authService.RegisterAsync(registerData);
-        return NoContent();
+        return Ok("Account registered");
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> LoginIntoAccountAsync([FromBody] LoginDTO loginData)
+    public async Task<IActionResult> LoginIntoAccountAsync([FromBody] AccountLoginDTO accountLoginData)
     {
-        var token = await authService.LoginAsync(loginData);
+        var token = await authService.LoginAsync(accountLoginData);
         
         HttpContext.Response.Cookies.Append("authToken", token, new CookieOptions
         {
@@ -37,19 +37,19 @@ public class AuthController(IAuthService authService, IOptions<AuthSettings> set
             Expires = DateTime.UtcNow.Add(settings.Value.TokenLifetime)
         });
         
-        return Ok(new { message = "Logged in successfully" });
+        return Ok("Logged in successfully");
     }
     
     [HttpPut]
     [Authorize]
-    public async Task<IActionResult> UpdateAccountAsync([FromBody] UpdateDTO updateData)
+    public async Task<IActionResult> UpdateAccountAsync([FromBody] AccountUpdateDTO updateData)
     {
         var guid = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if(!ValidateGuid(guid))
             return Unauthorized("The token does not contain a user ID");
         
         await authService.UpdateAccountAsync(guid, updateData);
-        return Ok();
+        return Ok("Account updated");
     }
 
     [HttpDelete]
@@ -61,7 +61,7 @@ public class AuthController(IAuthService authService, IOptions<AuthSettings> set
             return Unauthorized("The token does not contain a user ID");
         
         await authService.DeleteAccountAsync(guid);
-        return Ok();
+        return Ok("Account deleted");
     }
 
     [HttpGet("me")]
@@ -77,7 +77,7 @@ public class AuthController(IAuthService authService, IOptions<AuthSettings> set
     }
     
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public async Task<IActionResult> GetAllAccountsAsync()
     {
         var result = await authService.GetAllAccountsAsync();

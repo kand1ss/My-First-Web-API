@@ -4,9 +4,9 @@ namespace Application.Services;
 
 public interface IAuthService
 {
-    public Task RegisterAsync(RegisterDTO registerData);
-    public Task<string> LoginAsync(LoginDTO loginData);
-    public Task UpdateAccountAsync(string guid, UpdateDTO updateData);
+    public Task RegisterAsync(AccountRegisterDTO registerData);
+    public Task<string> LoginAsync(AccountLoginDTO accountLoginData);
+    public Task UpdateAccountAsync(string guid, AccountUpdateDTO updateData);
     public Task DeleteAccountAsync(string guid);
     
     public Task<AccountDTO> GetAccountByGuidAsync(string guid);

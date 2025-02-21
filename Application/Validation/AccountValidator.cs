@@ -21,7 +21,7 @@ public class AccountValidator(IAccountRepository accountRepository)
             throw new ValidationException("Email already exists");
     }
     
-    public async Task Validate(RegisterDTO registerData, CancellationToken cancellationToken = default)
+    public async Task Validate(AccountRegisterDTO registerData, CancellationToken cancellationToken = default)
     {
         var login = registerData.Login;
         var email = registerData.Email;
@@ -30,7 +30,7 @@ public class AccountValidator(IAccountRepository accountRepository)
         await EnsureEmailDoesNotExist(email, cancellationToken);
     }
 
-    public async Task Validate(LoginDTO accountDto, CancellationToken cancellationToken = default)
+    public async Task Validate(AccountLoginDTO accountDto, CancellationToken cancellationToken = default)
     {
         var accountByLogin = await accountRepository.GetByLoginAsync(accountDto.Login, cancellationToken);
         if (accountByLogin == null)
