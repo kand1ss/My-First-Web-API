@@ -39,4 +39,7 @@ public class AccountRepository(AppContext context) : IAccountRepository
 
     public async Task<IList<UserAccount>> GetAllAsync(CancellationToken cancellationToken = default)
         => await context.UserAccounts.ToListAsync(cancellationToken);
+    
+    public async Task<ICollection<Permission>?> GetPermissionsByGuidAsync(string guid, CancellationToken cancellationToken = default)
+        => (await GetByGuidAsync(guid, cancellationToken))?.UserPermissions.Select(p => p.Permission).ToList();
 }

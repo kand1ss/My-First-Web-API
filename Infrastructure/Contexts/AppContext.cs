@@ -9,12 +9,15 @@ public class AppContext(DbContextOptions<AppContext> options) : DbContext(option
     public DbSet<UserAccount> UserAccounts { get; set; }
     public DbSet<Book> Books { get; set; }
     public DbSet<Author> Authors { get; set; }
+    public DbSet<Permission> Permissions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new AuthorConfiguration());
         modelBuilder.ApplyConfiguration(new BookConfiguration());
         modelBuilder.ApplyConfiguration(new UserAccountConfiguration());
+        modelBuilder.ApplyConfiguration(new PermissionsConfiguration());
+        modelBuilder.ApplyConfiguration(new UserPermissionsConfiguration());
         
         base.OnModelCreating(modelBuilder);
     }

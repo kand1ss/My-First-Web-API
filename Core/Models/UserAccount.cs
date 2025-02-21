@@ -11,4 +11,5 @@ public class UserAccount
     public string PasswordHash { get; set; } = string.Empty;
     public DateTime CreatedUtc { get; set; }
     public DateTime ModifiedUtc { get; set; }
+    public ICollection<UserPermissions> UserPermissions { get; set; }
 }

@@ -77,6 +77,7 @@ public class AuthController(IAuthService authService, IOptions<AuthSettings> set
     }
     
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetAllAccountsAsync()
     {
         var result = await authService.GetAllAccountsAsync();

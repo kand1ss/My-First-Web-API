@@ -8,7 +8,8 @@ using Core.Models;
 namespace Application.Services;
 
 public class AuthService(
-    IAccountRepository accountRepository, JWTService jwtService, AccountValidator accountValidator) 
+    IAccountRepository accountRepository, IPermissionRepository permissionRepository, 
+    JWTService jwtService, AccountValidator accountValidator) 
     : IAuthService
 {
     public async Task RegisterAsync(RegisterDTO registerData)
@@ -25,6 +26,13 @@ public class AuthService(
         account.PasswordHash = PasswordService.HashPassword(registerData.Password, account);
         account.CreatedUtc = DateTime.UtcNow;
         account.ExternalId = Guid.NewGuid();
+        
+        var defaultPermissions = await permissionRepository.GetDefaultUserPermissionsAsync();
+        account.UserPermissions = defaultPermissions.Select(p => new UserPermissions
+        {
+            Account = account,
+            Permission = p
+        }).ToList();
         
         await accountRepository.CreateAsync(account);
     }
