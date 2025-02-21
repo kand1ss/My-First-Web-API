@@ -28,6 +28,17 @@ public static class AuthExtensions
                 IssuerSigningKey = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(authSettings.SecretKey))
             };
+
+            o.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    if (context.Request.Cookies.ContainsKey("authToken"))
+                        context.Token = context.Request.Cookies["authToken"];
+
+                    return Task.CompletedTask;
+                }
+            };
         });
         
         return services;

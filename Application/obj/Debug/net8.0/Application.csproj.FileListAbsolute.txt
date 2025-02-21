@@ -15,3 +15,4 @@ C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Application\obj\Debug\net8.0\
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Application\obj\Debug\net8.0\refint\Application.dll
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Application\obj\Debug\net8.0\Application.pdb
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Application\obj\Debug\net8.0\ref\Application.dll
+C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Application\obj\Debug\net8.0\Application.sourcelink.json

@@ -15,3 +15,4 @@ C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Infrastructure\obj\Debug\net8
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Infrastructure\obj\Debug\net8.0\Infrastructure.pdb
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Infrastructure\obj\Debug\net8.0\Infrastructure.genruntimeconfig.cache
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Infrastructure\obj\Debug\net8.0\ref\Infrastructure.dll
+C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\Infrastructure\obj\Debug\net8.0\Infrastructure.sourcelink.json

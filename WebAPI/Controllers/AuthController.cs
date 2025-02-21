@@ -1,16 +1,18 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Application;
 using Application.DTO;
 using Application.Exceptions;
 using Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/accounts")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(IAuthService authService, IOptions<AuthSettings> settings) : ControllerBase
 {
     private bool ValidateGuid(string? guid)
         => Guid.TryParse(guid, out _);
@@ -18,30 +20,24 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> RegisterAccountAsync([FromBody] RegisterDTO registerData)
     {
-        try
-        {
-            await authService.RegisterAsync(registerData);
-        }
-        catch (ValidationException e)
-        {
-            return BadRequest(e.Message);
-        }
+        await authService.RegisterAsync(registerData);
         return NoContent();
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> LoginIntoAccountAsync([FromBody] LoginDTO loginData)
     {
-        string result;
-        try
+        var token = await authService.LoginAsync(loginData);
+        
+        HttpContext.Response.Cookies.Append("authToken", token, new CookieOptions
         {
-            result = await authService.LoginAsync(loginData);
-        }
-        catch (ValidationException e)
-        {
-            return BadRequest(e.Message);
-        }
-        return Ok(result);
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.Add(settings.Value.TokenLifetime)
+        });
+        
+        return Ok(new { message = "Logged in successfully" });
     }
     
     [HttpPut]
@@ -52,19 +48,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         if(!ValidateGuid(guid))
             return Unauthorized("The token does not contain a user ID");
         
-        try
-        {
-            await authService.UpdateAccountAsync(guid, updateData);
-        }
-        catch (ValidationException e)
-        {
-            return BadRequest(e.Message);
-        }
-        catch (AccountNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
-        
+        await authService.UpdateAccountAsync(guid, updateData);
         return Ok();
     }
 
@@ -76,15 +60,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         if(!ValidateGuid(guid))
             return Unauthorized("The token does not contain a user ID");
         
-        try
-        {
-            await authService.DeleteAccountAsync(guid);
-        }
-        catch (AccountNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
-        
+        await authService.DeleteAccountAsync(guid);
         return Ok();
     }
 
@@ -96,32 +72,14 @@ public class AuthController(IAuthService authService) : ControllerBase
         if(!ValidateGuid(guid))
             return Unauthorized("The token does not contain a user ID");
         
-        AccountDTO result;
-        try
-        {
-            result = await authService.GetAccountByGuidAsync(guid);
-        }
-        catch (AccountNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
-        
+        var result = await authService.GetAccountByGuidAsync(guid);
         return Ok(result);
     }
     
     [HttpGet]
     public async Task<IActionResult> GetAllAccountsAsync()
     {
-        IList<AccountDTO> result;
-        try
-        {
-            result = await authService.GetAllAccountsAsync();
-        }
-        catch (AccountNotFoundException e)
-        {
-            return NotFound(e.Message);
-        }
-        
+        var result = await authService.GetAllAccountsAsync();
         return Ok(result);
     }
 }
