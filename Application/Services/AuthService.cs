@@ -31,7 +31,7 @@ public class AuthService(
         account.UserPermissions = defaultPermissions.Select(p => new UserPermissions
         {
             Account = account,
-            Permission = p
+            PermissionId = p.Id
         }).ToList();
         
         await accountRepository.CreateAsync(account);

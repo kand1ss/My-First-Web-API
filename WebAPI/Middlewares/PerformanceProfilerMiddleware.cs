@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace WebAPI;
 
-public class PerformanceMiddleware(RequestDelegate requestDelegate, ILogger<PerformanceMiddleware> logger)
+public class PerformanceProfilerMiddleware(RequestDelegate requestDelegate, ILogger<PerformanceProfilerMiddleware> logger)
 {
     public async Task Invoke(HttpContext httpContext)
     {

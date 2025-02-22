@@ -9,6 +9,7 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddAPIControllers();
 builder.Services.AddHealthChecks(builder.Configuration);
+builder.Services.AddMemoryCache();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
@@ -19,9 +20,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<PerformanceMiddleware>();
 app.UseHealthChecks();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.UseMiddleware<PerformanceProfilerMiddleware>();
 app.Run();
