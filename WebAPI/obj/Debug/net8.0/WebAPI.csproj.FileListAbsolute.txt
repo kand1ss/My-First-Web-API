@@ -130,3 +130,6 @@ C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\WebAPI\bin\Debug\net8.0\Swash
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\WebAPI\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\WebAPI\obj\Debug\net8.0\WebAPI.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\WebAPI\obj\Debug\net8.0\WebAPI.sourcelink.json
+C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\WebAPI\bin\Debug\net8.0\HealthChecks.NpgSql.dll
+C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\WebAPI\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.HealthChecks.dll
+C:\Users\kand1s\Desktop\C# Projects\AccountsWebAPI\WebAPI\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions.dll
