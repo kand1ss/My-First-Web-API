@@ -8,8 +8,8 @@ using Core.Models;
 namespace Application.Services;
 
 public class AuthService(
-    IAccountRepository accountRepository, IPermissionRepository permissionRepository, 
-    JWTService jwtService, AccountValidator accountValidator) 
+    IRefreshTokenRepository tokenRepository, IAccountRepository accountRepository, 
+    IPermissionRepository permissionRepository, JWTService jwtService, AccountValidator accountValidator) 
     : IAuthService
 {
     public async Task RegisterAsync(AccountRegisterDTO registerData)
@@ -37,15 +37,31 @@ public class AuthService(
         await accountRepository.CreateAsync(account);
     }
 
-    public async Task<string> LoginAsync(AccountLoginDTO accountLoginData)
+    public async Task<TokensDTO> LoginAsync(AccountLoginDTO accountLoginData)
     {
         await accountValidator.Validate(accountLoginData);
 
         var account = await accountRepository.GetByLoginAsync(accountLoginData.Login);
         if(PasswordService.ValidatePassword(accountLoginData.Password, account!))
-            return jwtService.GenerateToken(account!);
+            return await jwtService.GenerateTokens(account);
             
         throw new ValidationException("Invalid password");
+    }
+
+    public async Task<TokensDTO> LoginAsync(string refreshToken)
+    {
+        var token = await tokenRepository.GetRefreshTokenByToken(refreshToken);
+        if(token is null)
+            throw new ValidationException("Refresh token is not found");
+        
+        if (token.ExpiresAt < DateTime.UtcNow)
+            throw new ValidationException("The refresh token is an expired token");
+        
+        var account = await accountRepository.GetByGuidAsync(token.UserId.ToString());
+        if(account is null)
+            throw new ValidationException("Account by token does not exist");
+        
+        return await jwtService.GenerateTokens(account);
     }
 
     public async Task UpdateAccountAsync(string guid, AccountUpdateDTO updateData)

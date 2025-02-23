@@ -2,6 +2,7 @@ namespace Application;
 
 public class AuthSettings
 {
-    public TimeSpan TokenLifetime { get; set; }
+    public TimeSpan AccessTokenLifetime { get; set; }
+    public TimeSpan RefreshTokenLifetime { get; set; }
     public string SecretKey { get; set; } = string.Empty;
 }

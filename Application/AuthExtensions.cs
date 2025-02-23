@@ -47,8 +47,8 @@ public static class AuthExtensions
             {
                 OnMessageReceived = context =>
                 {
-                    if (context.Request.Cookies.ContainsKey("authToken"))
-                        context.Token = context.Request.Cookies["authToken"];
+                    if (context.Request.Cookies.ContainsKey("accessToken"))
+                        context.Token = context.Request.Cookies["accessToken"];
 
                     return Task.CompletedTask;
                 }

@@ -14,21 +14,21 @@ public class AccountRepository(AppContext context, IMemoryCache cache, ILogger<A
     private async Task<UserAccount?> GetFromCacheAsync(string cacheKey, Expression<Func<UserAccount, bool>> predicate,
         CancellationToken cancellationToken)
     {
-        if (!cache.TryGetValue(cacheKey, out UserAccount? account) || account is null)
-        {
-            account = await context.UserAccounts.
-                FirstOrDefaultAsync(predicate, cancellationToken);
+        if (cache.TryGetValue(cacheKey, out UserAccount? account))
+            return account;
+        
+        account = await context.UserAccounts.
+            FirstOrDefaultAsync(predicate, cancellationToken);
 
-            if (account is null)
-                return null;
+        if (account is null)
+            return null;
 
-            var cacheOptions = new MemoryCacheEntryOptions()
-                .SetAbsoluteExpiration(TimeSpan.FromMinutes(15))
-                .SetSlidingExpiration(TimeSpan.FromMinutes(5));
+        var cacheOptions = new MemoryCacheEntryOptions()
+            .SetAbsoluteExpiration(TimeSpan.FromMinutes(15))
+            .SetSlidingExpiration(TimeSpan.FromMinutes(5));
             
-            cache.Set(cacheKey, account, cacheOptions);
-            logger.LogInformation("Account cached");
-        }
+        cache.Set(cacheKey, account, cacheOptions);
+        logger.LogInformation("Account cached");
         
         return account;
     }
@@ -66,6 +66,7 @@ public class AccountRepository(AppContext context, IMemoryCache cache, ILogger<A
         await context.SaveChangesAsync(cancellationToken);
     }
 
+    
     public async Task<UserAccount?> GetByGuidAsync(string guid, CancellationToken cancellationToken = default)
         => await GetFromCacheAsync($"Account_{guid}", a => a.ExternalId.ToString() == guid, cancellationToken);
 

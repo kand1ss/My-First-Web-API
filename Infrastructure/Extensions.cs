@@ -21,6 +21,7 @@ public static class Extensions
         services.AddScoped<IAuthorRepository, AuthorRepository>();
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         
         return services;
     }

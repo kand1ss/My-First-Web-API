@@ -17,5 +17,7 @@ public class UserAccountConfiguration : IEntityTypeConfiguration<UserAccount>
         builder.Property(x => x.FirstName).HasMaxLength(32);
         builder.Property(x => x.LastName).HasMaxLength(32);
         builder.Property(x => x.PasswordHash).IsRequired().HasMaxLength(128);
+        
+        builder.HasIndex(x => x.ExternalId);
     }
 }

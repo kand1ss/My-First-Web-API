@@ -10,6 +10,7 @@ public class AppContext(DbContextOptions<AppContext> options) : DbContext(option
     public DbSet<Book> Books { get; set; }
     public DbSet<Author> Authors { get; set; }
     public DbSet<Permission> Permissions { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -18,6 +19,7 @@ public class AppContext(DbContextOptions<AppContext> options) : DbContext(option
         modelBuilder.ApplyConfiguration(new UserAccountConfiguration());
         modelBuilder.ApplyConfiguration(new PermissionsConfiguration());
         modelBuilder.ApplyConfiguration(new UserPermissionsConfiguration());
+        modelBuilder.ApplyConfiguration(new RefreshTokensConfiguration());
         
         base.OnModelCreating(modelBuilder);
     }

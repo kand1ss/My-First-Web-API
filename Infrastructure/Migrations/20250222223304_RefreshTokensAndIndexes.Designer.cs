@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using AppContext = Infrastructure.Contexts.AppContext;
@@ -12,9 +13,11 @@ using AppContext = Infrastructure.Contexts.AppContext;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppContext))]
-    partial class AppContextModelSnapshot : ModelSnapshot
+    [Migration("20250222223304_RefreshTokensAndIndexes")]
+    partial class RefreshTokensAndIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,7 +52,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Authors", (string)null);
+                    b.ToTable("Authors");
                 });
 
             modelBuilder.Entity("Core.Models.Book", b =>
@@ -81,7 +84,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("AuthorId");
 
-                    b.ToTable("Books", (string)null);
+                    b.ToTable("Books");
                 });
 
             modelBuilder.Entity("Core.Models.Permission", b =>
@@ -99,19 +102,16 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Permissions", (string)null);
+                    b.ToTable("Permissions");
                 });
 
-            modelBuilder.Entity("Core.Models.RefreshToken", b =>
+            modelBuilder.Entity("Core.Models.RefreshTokens", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Token")
                         .IsRequired()
@@ -126,7 +126,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Core.Models.UserAccount", b =>
@@ -174,7 +174,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("ExternalId");
 
-                    b.ToTable("UserAccounts", (string)null);
+                    b.ToTable("UserAccounts");
                 });
 
             modelBuilder.Entity("Core.Models.UserPermissions", b =>
@@ -189,7 +189,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("PermissionId");
 
-                    b.ToTable("UserPermissions", (string)null);
+                    b.ToTable("UserPermissions");
                 });
 
             modelBuilder.Entity("Core.Models.Book", b =>
@@ -203,11 +203,11 @@ namespace Infrastructure.Migrations
                     b.Navigation("Author");
                 });
 
-            modelBuilder.Entity("Core.Models.RefreshToken", b =>
+            modelBuilder.Entity("Core.Models.RefreshTokens", b =>
                 {
                     b.HasOne("Core.Models.UserAccount", null)
                         .WithOne()
-                        .HasForeignKey("Core.Models.RefreshToken", "UserId")
+                        .HasForeignKey("Core.Models.RefreshTokens", "UserId")
                         .HasPrincipalKey("Core.Models.UserAccount", "ExternalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

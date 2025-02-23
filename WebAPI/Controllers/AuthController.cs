@@ -24,18 +24,44 @@ public class AuthController(IAuthService authService, IOptions<AuthSettings> set
         return Ok("Account registered");
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> LoginIntoAccountAsync([FromBody] AccountLoginDTO accountLoginData)
+    private void AppendTokensToCookies(TokensDTO tokens)
     {
-        var token = await authService.LoginAsync(accountLoginData);
-        
-        HttpContext.Response.Cookies.Append("authToken", token, new CookieOptions
+        HttpContext.Response.Cookies.Append("accessToken", tokens.AccessToken, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
             SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.Add(settings.Value.TokenLifetime)
+            Expires = DateTime.UtcNow.Add(settings.Value.AccessTokenLifetime)
         });
+        HttpContext.Response.Cookies.Append("refreshToken", tokens.RefreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.Add(settings.Value.RefreshTokenLifetime)
+        });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> LoginIntoAccountAsync([FromBody] AccountLoginDTO accountLoginData)
+    {
+        var tokens = await authService.LoginAsync(accountLoginData);
+        
+        AppendTokensToCookies(tokens);
+        
+        return Ok("Logged in successfully");
+    }
+
+    [HttpPost("login/refresh")]
+    public async Task<IActionResult> RefreshLoginAsync()
+    {
+        var refreshToken = Request.Cookies["refreshToken"];
+        if (string.IsNullOrEmpty(refreshToken))
+            return BadRequest("Refresh token not found in cookies or it is empty.");
+        
+        var tokens = await authService.LoginAsync(refreshToken);
+        
+        AppendTokensToCookies(tokens);
         
         return Ok("Logged in successfully");
     }
