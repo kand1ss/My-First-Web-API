@@ -8,42 +8,9 @@ using AppContext = Infrastructure.Contexts.AppContext;
 
 namespace Infrastructure.Repositories;
 
-public class AccountRepository(AppContext context, IMemoryCache cache, ILogger<AccountRepository> logger) 
+public class AccountRepository(AppContext context, ILogger<AccountRepository> logger) 
     : IAccountRepository
 {
-    private async Task<UserAccount?> GetFromCacheAsync(string cacheKey, Expression<Func<UserAccount, bool>> predicate,
-        CancellationToken cancellationToken)
-    {
-        if (cache.TryGetValue(cacheKey, out UserAccount? account))
-            return account;
-        
-        account = await context.UserAccounts.
-            FirstOrDefaultAsync(predicate, cancellationToken);
-
-        if (account is null)
-            return null;
-
-        var cacheOptions = new MemoryCacheEntryOptions()
-            .SetAbsoluteExpiration(TimeSpan.FromMinutes(15))
-            .SetSlidingExpiration(TimeSpan.FromMinutes(5));
-            
-        cache.Set(cacheKey, account, cacheOptions);
-        logger.LogInformation("Account cached");
-        
-        return account;
-    }
-
-    private void RemoveFromCache(UserAccount account)
-    {
-        cache.Remove($"Account_{account.ExternalId}");
-        cache.Remove($"Account_{account.Login}");
-        cache.Remove($"Account_{account.Email}");
-        
-        logger.LogInformation("Account removed from cache");
-    }
-    
-    
-    
     public async Task CreateAsync(UserAccount userAccount, CancellationToken cancellationToken = default)
     {
         await context.UserAccounts.AddAsync(userAccount, cancellationToken);
@@ -54,50 +21,33 @@ public class AccountRepository(AppContext context, IMemoryCache cache, ILogger<A
     {
         context.UserAccounts.Update(userAccount);
         await context.SaveChangesAsync(cancellationToken);
-        
-        RemoveFromCache(userAccount);
     }
 
     public async Task DeleteAsync(UserAccount userAccount, CancellationToken cancellationToken = default)
     {
-        RemoveFromCache(userAccount);
-        
         context.UserAccounts.Remove(userAccount);
         await context.SaveChangesAsync(cancellationToken);
     }
-
     
     public async Task<UserAccount?> GetByGuidAsync(string guid, CancellationToken cancellationToken = default)
-        => await GetFromCacheAsync($"Account_{guid}", a => a.ExternalId.ToString() == guid, cancellationToken);
+        => await context.UserAccounts.FirstOrDefaultAsync(x => x.ExternalId.ToString() == guid, cancellationToken);
 
     public async Task<UserAccount?> GetByLoginAsync(string login, CancellationToken cancellationToken = default)
-        => await GetFromCacheAsync($"Account_{login}", a => a.Login == login, cancellationToken);
+        => await context.UserAccounts.FirstOrDefaultAsync(x => x.Login == login, cancellationToken);
 
     public async Task<UserAccount?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
-        => await GetFromCacheAsync($"Account_{email}", a => a.Email == email, cancellationToken);
+        => await context.UserAccounts.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
 
     public async Task<IList<UserAccount>> GetAllAsync(CancellationToken cancellationToken = default)
         => await context.UserAccounts.ToListAsync(cancellationToken);
 
-    public async Task<IList<Permission>> GetAllPermissionsByGuidAsync(string guid, CancellationToken cancellationToken = default)
+    public async Task<IList<Permission>?> GetAllPermissionsByGuidAsync(string guid, CancellationToken cancellationToken = default)
     {
-        string cacheKey = $"AccountPermissions_{guid}";
+        var userAccount = await context.UserAccounts
+            .Include(userAccount => userAccount.UserPermissions)
+            .ThenInclude(userPermissions => userPermissions.Permission)
+            .FirstOrDefaultAsync(x => x.ExternalId.ToString() == guid, cancellationToken);
 
-        if (!cache.TryGetValue(cacheKey, out IList<Permission>? permissions) || permissions is null)
-        {
-            var userAccount = await context.UserAccounts
-                .Include(x => x.UserPermissions)
-                .ThenInclude(x => x.Permission)
-                .FirstOrDefaultAsync(a => a.ExternalId.ToString() == guid, cancellationToken);
-            
-            permissions = userAccount?.UserPermissions?.Select(p => p.Permission).ToList() ?? new List<Permission>();
-
-            var cacheOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(TimeSpan.FromMinutes(5));
-            
-            cache.Set(cacheKey, permissions, cacheOptions);
-        }
-
-        return permissions;
+        return userAccount.UserPermissions.Select(p => p.Permission).ToList();
     }
 }

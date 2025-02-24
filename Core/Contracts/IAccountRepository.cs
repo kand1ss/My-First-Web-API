@@ -13,5 +13,5 @@ public interface IAccountRepository
     public Task<UserAccount?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
     public Task<IList<UserAccount>> GetAllAsync(CancellationToken cancellationToken = default);
     
-    public Task<IList<Permission>> GetAllPermissionsByGuidAsync(string guid, CancellationToken cancellationToken = default);
+    public Task<IList<Permission>?> GetAllPermissionsByGuidAsync(string guid, CancellationToken cancellationToken = default);
 }

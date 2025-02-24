@@ -9,13 +9,35 @@ namespace Application.Services;
 
 public class AuthService(
     IRefreshTokenRepository tokenRepository, IAccountRepository accountRepository, 
-    IPermissionRepository permissionRepository, JWTService jwtService, AccountValidator accountValidator) 
+    IPermissionRepository permissionRepository, JWTService jwtService, AccountValidator accountValidator,
+    ICacheService cacheService) 
     : IAuthService
 {
-    public async Task RegisterAsync(AccountRegisterDTO registerData)
+    private async Task<UserAccount> GetAccountByGuid(string guid)
     {
-        await accountValidator.Validate(registerData);
-
+        var account = await accountRepository.GetByGuidAsync(guid);
+        if (account == null)
+            throw new AccountNotFoundException(guid);
+        
+        return account;
+    }
+    private async Task<UserAccount> GetAccountByLogin(string login)
+    {
+        var account = await accountRepository.GetByLoginAsync(login);
+        if (account == null)
+            throw new AccountNotFoundException(login);
+        
+        return account;
+    }
+    private bool TryGetAccountFromCache(string login, out UserAccount? account)
+    {
+        var cacheKey = CacheKeysTemplates.AccountKey(login);
+        return cacheService.TryGet(cacheKey, out account);
+    }
+    
+    
+    private static UserAccount InitializeAccount(AccountRegisterDTO registerData, ICollection<Permission> permissions)
+    {
         var account = AccountFactory.Create(
             registerData.Login,
             registerData.Email,
@@ -27,28 +49,59 @@ public class AuthService(
         account.CreatedUtc = DateTime.UtcNow;
         account.ExternalId = Guid.NewGuid();
         
-        var defaultPermissions = await permissionRepository.GetDefaultUserPermissionsAsync();
-        account.UserPermissions = defaultPermissions.Select(p => new UserPermissions
+        account.UserPermissions = permissions.Select(p => new UserPermissions
         {
             Account = account,
             PermissionId = p.Id
         }).ToList();
         
-        await accountRepository.CreateAsync(account);
+        return account;
     }
-
-    public async Task<TokensDTO> LoginAsync(AccountLoginDTO accountLoginData)
+    private async Task<ICollection<Permission>> GetDefaultPermissions()
     {
-        await accountValidator.Validate(accountLoginData);
+        var permissionsCacheKey = CacheKeysTemplates.PermissionsKey("DefaultPermissions");
+        if (!cacheService.TryGet<ICollection<Permission>>(permissionsCacheKey, out var defaultPermissions))
+        {
+            defaultPermissions = await permissionRepository.GetDefaultUserPermissionsAsync();
+            cacheService.Put(permissionsCacheKey, defaultPermissions, 20, 10);
+        }
 
-        var account = await accountRepository.GetByLoginAsync(accountLoginData.Login);
-        if(PasswordService.ValidatePassword(accountLoginData.Password, account!))
-            return await jwtService.GenerateTokens(account);
-            
-        throw new ValidationException("Invalid password");
+        return defaultPermissions;
+    }
+    public async Task RegisterAsync(AccountRegisterDTO registerData)
+    {
+        await accountValidator.Validate(registerData);
+
+        var defaultPermissions = await GetDefaultPermissions();
+        var account = InitializeAccount(registerData, defaultPermissions);
+
+        await accountRepository.CreateAsync(account);
+
+        var accountCacheKey = CacheKeysTemplates.AccountKey(account.Login);
+        cacheService.Put(accountCacheKey, account, 20, 5);
     }
 
-    public async Task<TokensDTO> LoginAsync(string refreshToken)
+
+    private async Task<TokensDTO> GenerateTokensIfPasswordValid(string passwordToValid, UserAccount account)
+    {
+        if (PasswordService.ValidatePassword(passwordToValid, account))
+            return await jwtService.GenerateTokens(account);
+        
+        throw new ValidationException($"Invalid password for account \"{account.Login}\"");
+    }
+    public async Task<TokensDTO> LoginAsync(AccountLoginDTO loginData)
+    {
+        await accountValidator.Validate(loginData);
+        
+        if(TryGetAccountFromCache(loginData.Login, out UserAccount? accountFromCache))
+            return await GenerateTokensIfPasswordValid(loginData.Password, accountFromCache);
+
+        var account = await GetAccountByLogin(loginData.Login);
+        return await GenerateTokensIfPasswordValid(loginData.Password, account);
+    }
+
+
+    public async Task<TokensDTO> LoginWithTokenAsync(string refreshToken)
     {
         var token = await tokenRepository.GetRefreshTokenByToken(refreshToken);
         if(token is null)
@@ -63,80 +116,80 @@ public class AuthService(
         
         return await jwtService.GenerateTokens(account);
     }
+    
+    
+    private async Task ValidateAndSetData(UserAccount accountToUpdate, AccountUpdateDTO updateData)
+    {
+        var newLogin = updateData.Login;
+        var newEmail = updateData.Email;
+        var newPassword = updateData.Password;
+        var newFirstName = updateData.FirstName;
+        var newLastName = updateData.LastName;
 
+        var oldEmail = accountToUpdate.Email;
+        var oldLogin = accountToUpdate.Login;
+        
+        if (newEmail != null && oldEmail != newEmail)
+        {
+            await accountValidator.EnsureEmailDoesNotExist(newEmail);
+            accountToUpdate.Email = newEmail;
+        }
+        if (newLogin != null && oldLogin != newLogin)
+        {
+            await accountValidator.EnsureLoginDoesNotExist(newLogin);
+            accountToUpdate.Login = newLogin;
+        }
+        if (!string.IsNullOrEmpty(newPassword))
+            accountToUpdate.PasswordHash = PasswordService.HashPassword(newPassword, accountToUpdate);
+        
+        if(!string.IsNullOrEmpty(newFirstName))
+            accountToUpdate.FirstName = newFirstName;
+        if(!string.IsNullOrEmpty(newLastName))
+            accountToUpdate.LastName = newLastName;
+        
+        accountToUpdate.ModifiedUtc = DateTime.UtcNow;
+    }
     public async Task UpdateAccountAsync(string guid, AccountUpdateDTO updateData)
     {
-        var account = await accountRepository.GetByGuidAsync(guid);
-        if (account == null)
-            throw new AccountNotFoundException(guid);
+        var account = await GetAccountByGuid(guid);
+        var cacheKey = CacheKeysTemplates.AccountKey(account.Login);
+        var oldLogin = account.Login;
         
-        var login = updateData.Login;
-        var email = updateData.Email;
-        var password = updateData.Password;
-        var firstName = updateData.FirstName;
-        var lastName = updateData.LastName;
-        
-        await ValidateAndSetLogin(account, login);
-        await ValidateAndSetEmail(account, email);
-        
-        if(!string.IsNullOrEmpty(password) && !PasswordService.ValidatePassword(password, account))
-            account.PasswordHash = PasswordService.HashPassword(password, account);
-        
-        if(!string.IsNullOrEmpty(firstName))
-            account.FirstName = firstName;
-        if(!string.IsNullOrEmpty(lastName))
-            account.LastName = lastName;
-        
-        account.ModifiedUtc = DateTime.UtcNow;
-
+        await ValidateAndSetData(account, updateData);
         await accountRepository.UpdateAsync(account);
-    }
-
-    private async Task ValidateAndSetEmail(UserAccount account, string? email)
-    {
-        if (account.Email != email && email != null)
-        {
-            await accountValidator.EnsureEmailDoesNotExist(email);
-            account.Email = email;
-        }
-    }
-    private async Task ValidateAndSetLogin(UserAccount account, string? login)
-    {
-        if (account.Login != login && login != null)
-        {
-            await accountValidator.EnsureLoginDoesNotExist(login);
-            account.Login = login;
-        }
+        
+        if(updateData.Login != oldLogin)
+            cacheService.Remove(cacheKey);
+        
+        var newCacheKey = CacheKeysTemplates.AccountKey(account.Login);
+        cacheService.Put(newCacheKey, account, 20, 10);
     }
 
     
     public async Task DeleteAccountAsync(string guid)
     {
-        var account = await accountRepository.GetByGuidAsync(guid);
-        if(account == null)
-            throw new AccountNotFoundException(guid);
-        
+        var account = await GetAccountByGuid(guid);
+        cacheService.Remove(CacheKeysTemplates.AccountKey(account.Login));
+
         await accountRepository.DeleteAsync(account);
     }
 
+    
     public async Task<AccountDTO> GetAccountByGuidAsync(string guid)
-    {
-        var account = await accountRepository.GetByGuidAsync(guid);
-        if(account == null)
-            throw new AccountNotFoundException(guid);
+        => (await GetAccountByGuid(guid)).ToDTO();
 
-        return account.ToDTO();
-    }
-
+    
     public async Task<AccountDTO> GetAccountByLoginAsync(string login)
     {
-        var account = await accountRepository.GetByLoginAsync(login);
-        if (account == null)
-            throw new AccountNotFoundException(login);
+        if (TryGetAccountFromCache(login, out var accountFromCache))
+            return accountFromCache.ToDTO();
+
+        var account = await GetAccountByLogin(login);
         
         return account.ToDTO();
     }
 
+    
     public async Task<IList<AccountDTO>> GetAllAccountsAsync()
         => (await accountRepository.GetAllAsync()).ToDTOs().ToList();
 }

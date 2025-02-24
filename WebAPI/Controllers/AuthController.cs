@@ -59,7 +59,7 @@ public class AuthController(IAuthService authService, IOptions<AuthSettings> set
         if (string.IsNullOrEmpty(refreshToken))
             return BadRequest("Refresh token not found in cookies or it is empty.");
         
-        var tokens = await authService.LoginAsync(refreshToken);
+        var tokens = await authService.LoginWithTokenAsync(refreshToken);
         
         AppendTokensToCookies(tokens);
         
