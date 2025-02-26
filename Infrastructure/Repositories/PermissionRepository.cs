@@ -15,4 +15,14 @@ public class PermissionRepository(AppContext context, IMemoryCache cache) : IPer
             .Where(p => p.Name == "Read")
             .AsNoTracking()
             .ToListAsync(cancellationToken);
+    
+    public async Task<ICollection<Permission>> GetPermissionsByAccountGuidAsync(string guid, CancellationToken cancellationToken = default)
+    {
+        var userAccount = await context.UserAccounts
+            .Include(userAccount => userAccount.UserPermissions)
+            .ThenInclude(userPermissions => userPermissions.Permission)
+            .FirstOrDefaultAsync(x => x.ExternalId.ToString() == guid, cancellationToken);
+
+        return userAccount.UserPermissions.Select(p => p.Permission).ToList();
+    }
 }

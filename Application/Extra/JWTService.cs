@@ -16,15 +16,15 @@ public class JWTService(IRefreshTokenRepository tokenRepository, IOptions<AuthSe
     {
         var accessToken = GenerateAccessToken(userAccount);
         var refreshToken = GenerateRefreshToken();
-        var refreshTokenFromRepo = await tokenRepository.GetRefreshTokenByUserGuid(userAccount.ExternalId.ToString());
         
-        await SaveRefreshToken(userAccount.ExternalId, refreshTokenFromRepo, refreshToken);
+        await SaveRefreshToken(userAccount.ExternalId, refreshToken);
 
         return new TokensDTO(accessToken, refreshToken);
     }
 
-    private async Task SaveRefreshToken(Guid userGuid, RefreshToken? refreshTokenFromRepo, string newRefreshToken)
+    private async Task SaveRefreshToken(Guid userGuid, string newRefreshToken)
     {
+        var refreshTokenFromRepo = await tokenRepository.GetRefreshTokenByUserGuid(userGuid.ToString());
         var refreshTokenExpiration = DateTime.UtcNow.Add(authSettings.Value.RefreshTokenLifetime);
         
         if (refreshTokenFromRepo is null)

@@ -8,5 +8,5 @@ public interface IAuthorRepository
     public Task UpdateAsync(Author author, CancellationToken cancellationToken = default);
     public Task DeleteAsync(Author author, CancellationToken cancellationToken = default);
     public Task<Author?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
-    public Task<IList<Author>> GetAllAsync(CancellationToken cancellationToken = default);
+    public Task<IEnumerable<Author>> GetAllAsync(CancellationToken cancellationToken = default);
 }

@@ -38,16 +38,6 @@ public class AccountRepository(AppContext context, ILogger<AccountRepository> lo
     public async Task<UserAccount?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
         => await context.UserAccounts.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
 
-    public async Task<IList<UserAccount>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<UserAccount>> GetAllAsync(CancellationToken cancellationToken = default)
         => await context.UserAccounts.ToListAsync(cancellationToken);
-
-    public async Task<IList<Permission>?> GetAllPermissionsByGuidAsync(string guid, CancellationToken cancellationToken = default)
-    {
-        var userAccount = await context.UserAccounts
-            .Include(userAccount => userAccount.UserPermissions)
-            .ThenInclude(userPermissions => userPermissions.Permission)
-            .FirstOrDefaultAsync(x => x.ExternalId.ToString() == guid, cancellationToken);
-
-        return userAccount.UserPermissions.Select(p => p.Permission).ToList();
-    }
 }

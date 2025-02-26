@@ -12,5 +12,5 @@ public interface IAuthService
     
     public Task<AccountDTO> GetAccountByGuidAsync(string guid);
     public Task<AccountDTO> GetAccountByLoginAsync(string login);
-    public Task<IList<AccountDTO>> GetAllAccountsAsync();
+    public Task<IEnumerable<AccountDTO>> GetAllAccountsAsync();
 }

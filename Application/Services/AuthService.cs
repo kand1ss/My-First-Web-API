@@ -142,11 +142,8 @@ public class AuthService(
         if (!string.IsNullOrEmpty(newPassword))
             accountToUpdate.PasswordHash = PasswordService.HashPassword(newPassword, accountToUpdate);
         
-        if(!string.IsNullOrEmpty(newFirstName))
-            accountToUpdate.FirstName = newFirstName;
-        if(!string.IsNullOrEmpty(newLastName))
-            accountToUpdate.LastName = newLastName;
-        
+        accountToUpdate.FirstName = newFirstName ?? accountToUpdate.FirstName;
+        accountToUpdate.LastName = newLastName ?? accountToUpdate.LastName;
         accountToUpdate.ModifiedUtc = DateTime.UtcNow;
     }
     public async Task UpdateAccountAsync(string guid, AccountUpdateDTO updateData)
@@ -190,6 +187,6 @@ public class AuthService(
     }
 
     
-    public async Task<IList<AccountDTO>> GetAllAccountsAsync()
-        => (await accountRepository.GetAllAsync()).ToDTOs().ToList();
+    public async Task<IEnumerable<AccountDTO>> GetAllAccountsAsync()
+        => (await accountRepository.GetAllAsync()).ToDTOs();
 }

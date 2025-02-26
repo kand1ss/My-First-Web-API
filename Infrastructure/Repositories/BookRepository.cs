@@ -30,6 +30,6 @@ public class BookRepository(AppContext context) : IBookRepository
     public async Task<Book?> GetByTitleAsync(string title, CancellationToken cancellationToken = default)
         => await context.Books.FirstOrDefaultAsync(b => b.Title == title, cancellationToken);
 
-    public async Task<IList<Book>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Book>> GetAllAsync(CancellationToken cancellationToken = default)
         => await context.Books.ToListAsync(cancellationToken);
 }

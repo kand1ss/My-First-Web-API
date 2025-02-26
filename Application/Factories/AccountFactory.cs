@@ -6,7 +6,7 @@ public static class AccountFactory
 {
     public static UserAccount Create(
         string login, string email, string? firstName, string? lastName)
-        => new UserAccount
+        => new()
         {
             Login = login,
             Email = email,

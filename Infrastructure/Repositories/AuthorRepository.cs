@@ -28,6 +28,6 @@ public class AuthorRepository(AppContext context) : IAuthorRepository
     public async Task<Author?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await context.Authors.FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
-    public async Task<IList<Author>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Author>> GetAllAsync(CancellationToken cancellationToken = default)
         => await context.Authors.ToListAsync(cancellationToken);
 }

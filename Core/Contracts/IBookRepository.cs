@@ -10,5 +10,5 @@ public interface IBookRepository
     
     public Task<Book?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
     public Task<Book?> GetByTitleAsync(string title, CancellationToken cancellationToken = default);
-    public Task<IList<Book>> GetAllAsync(CancellationToken cancellationToken = default);
+    public Task<IEnumerable<Book>> GetAllAsync(CancellationToken cancellationToken = default);
 }
